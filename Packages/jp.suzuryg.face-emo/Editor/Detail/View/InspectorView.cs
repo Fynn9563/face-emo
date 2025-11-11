@@ -1103,6 +1103,11 @@ namespace Suzuryg.FaceEmo.Detail.View
 
             EditorGUILayout.Space(10);
 
+            // Transparent background toggle
+            Field_TransparentBackgroundToggle();
+
+            EditorGUILayout.Space(10);
+
             // Draw reset button
             if (GUILayout.Button(_localizationTable.InspectorView_Thumbnail_Reset))
             {
@@ -1113,6 +1118,23 @@ namespace Suzuryg.FaceEmo.Detail.View
                 hAngle.floatValue = ThumbnailSetting.DefaultCameraAngleH;
                 vAngle.floatValue = ThumbnailSetting.DefaultCameraAngleV;
                 _thumbnailDrawer.RequestUpdateAll();
+            }
+        }
+
+        private void Field_TransparentBackgroundToggle()
+        {
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                var key = $"{DomainConstants.SystemName}_UseTransparentBackground";
+                var oldValue = EditorPrefs.GetBool(key, false);
+                var newValue = EditorGUILayout.Toggle(string.Empty, oldValue, GUILayout.Width(ToggleWidth));
+                if (newValue != oldValue)
+                {
+                    EditorPrefs.SetBool(key, newValue);
+                    DrawingUtility.ClearCache();
+                    _thumbnailDrawer.RequestUpdateAll();
+                }
+                GUILayout.Label(_localizationTable.InspectorView_Thumbnail_TransparentBackground);
             }
         }
 
