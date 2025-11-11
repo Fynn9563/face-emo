@@ -12,7 +12,7 @@ namespace Suzuryg.FaceEmo.Components.Data
         public bool MouthMorphCancelerEnabled;
         public bool IsLeftTriggerUsed;
         public bool IsRightTriggerUsed;
-        public bool ShowInEmoteSelect;
+
         public SerializableAnimation BaseAnimation;
         public SerializableAnimation LeftHandAnimation;
         public SerializableAnimation RightHandAnimation;
@@ -28,7 +28,6 @@ namespace Suzuryg.FaceEmo.Components.Data
             MouthMorphCancelerEnabled = branch.MouthMorphCancelerEnabled;
             IsLeftTriggerUsed = branch.IsLeftTriggerUsed;
             IsRightTriggerUsed = branch.IsRightTriggerUsed;
-            ShowInEmoteSelect = branch.ShowInEmoteSelect;
 
             if (branch.BaseAnimation is Domain.Animation)
             {
@@ -98,8 +97,7 @@ namespace Suzuryg.FaceEmo.Components.Data
                 blinkEnabled: BlinkEnabled,
                 mouthMorphCancelerEnabled: MouthMorphCancelerEnabled,
                 isLeftTriggerUsed: IsLeftTriggerUsed,
-                isRightTriggerUsed: IsRightTriggerUsed,
-                showInEmoteSelect: ShowInEmoteSelect);
+                isRightTriggerUsed: IsRightTriggerUsed);
 
             menu.SetAnimation(BaseAnimation?.Load(), id, index, BranchAnimationType.Base);
             menu.SetAnimation(LeftHandAnimation?.Load(), id, index, BranchAnimationType.Left);

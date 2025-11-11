@@ -295,10 +295,9 @@ namespace Suzuryg.FaceEmo.Detail.View
             bool? blinkEnabled,
             bool? mouthMorphCancelerEnabled,
             bool? isLeftTriggerUsed,
-            bool? isRightTriggerUsed,
-            bool? showInEmoteSelect) args)
+            bool? isRightTriggerUsed) args)
         {
-            _modifyBranchPropertiesUseCase.Handle("", args.modeId, args.branchIndex, args.eyeTrackingControl, args.mouthTrackingControl, args.blinkEnabled, args.mouthMorphCancelerEnabled, args.isLeftTriggerUsed, args.isRightTriggerUsed, args.showInEmoteSelect);
+            _modifyBranchPropertiesUseCase.Handle("", args.modeId, args.branchIndex, args.eyeTrackingControl, args.mouthTrackingControl, args.blinkEnabled, args.mouthMorphCancelerEnabled, args.isLeftTriggerUsed, args.isRightTriggerUsed);
         }
 
         private void OnAddBranchButtonClicked()
@@ -360,7 +359,9 @@ namespace Suzuryg.FaceEmo.Detail.View
             }
             catch (Exception ex)
             {
-                EditorUtility.DisplayDialog(DomainConstants.SystemName, $"{_localizationTable.ErrorHandler_Message_ErrorOccured}\n{nameof(OnCopyBranchButtonClicked)}: Error", "OK");
+                ReadableErrorWindow.Open(DomainConstants.SystemName,
+                    $"{_localizationTable.ErrorHandler_Message_ErrorOccured}\n{nameof(OnCopyBranchButtonClicked)}: Error",
+                    ex.ToString());
                 Debug.LogException(ex);
             }
         }

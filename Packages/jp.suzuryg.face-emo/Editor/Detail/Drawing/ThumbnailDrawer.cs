@@ -14,13 +14,14 @@ using UniRx;
 using UnityEngine.SceneManagement;
 using UnityEditor.SceneManagement;
 using VRC.SDK3.Avatars.Components;
+using Object = UnityEngine.Object;
 
 namespace Suzuryg.FaceEmo.Detail.Drawing
 {
     public class MainThumbnailDrawer : ThumbnailDrawerBase
     {
-        protected override int Width => _thumbnailSetting.Main_Width;
-        protected override int Height => _thumbnailSetting.Main_Height;
+        protected override int Width => EditorPrefsStore.MainViewThumbnailWidthInMemory;
+        protected override int Height => EditorPrefsStore.MainViewThumbnailHeightInMemory;
         protected override float FOV => _thumbnailSetting.Main_FOV;
         protected override float Distance => _thumbnailSetting.Main_Distance;
         protected override float CameraPosX => _thumbnailSetting.Main_CameraPosX;
@@ -33,8 +34,8 @@ namespace Suzuryg.FaceEmo.Detail.Drawing
 
     public class GestureTableThumbnailDrawer : ThumbnailDrawerBase
     {
-        protected override int Width => _thumbnailSetting.GestureTable_Width;
-        protected override int Height => _thumbnailSetting.GestureTable_Height;
+        protected override int Width => EditorPrefsStore.GestureTableThumbnailWidthInMemory;
+        protected override int Height => EditorPrefsStore.GestureTableThumbnailHeightInMemory;
         protected override float FOV => _thumbnailSetting.Main_FOV;
         protected override float Distance => _thumbnailSetting.Main_Distance;
         protected override float CameraPosX => _thumbnailSetting.Main_CameraPosX;
@@ -47,8 +48,8 @@ namespace Suzuryg.FaceEmo.Detail.Drawing
 
     public class ExMenuThumbnailDrawer : ThumbnailDrawerBase
     {
-        protected override int Width => ThumbnailSetting.ExMenu_InnerWidth;
-        protected override int Height => ThumbnailSetting.ExMenu_InnerHeight;
+        protected override int Width => DetailConstants.ExMenuThumbnailInnerWidth;
+        protected override int Height => DetailConstants.ExMenuThumbnailInnerHeight;
         protected override float FOV => _thumbnailSetting.Main_FOV;
         protected override float Distance => _thumbnailSetting.Main_Distance;
         protected override float CameraPosX => _thumbnailSetting.Main_CameraPosX;
@@ -142,6 +143,13 @@ namespace Suzuryg.FaceEmo.Detail.Drawing
             _disposables?.Dispose();
         }
 
+        public Texture2D GetCachedThumbnailOrNull(Domain.Animation animation)
+        {
+            var guid = GetGUID(animation);
+
+            return _cache.GetValueOrDefault(guid, null);
+        }
+
         public Texture2D GetThumbnail(Domain.Animation animation)
         {
             var guid = GetGUID(animation);
@@ -226,7 +234,11 @@ namespace Suzuryg.FaceEmo.Detail.Drawing
             try
             {
                 // Clone avatar
-                clonedAvatar = UnityEngine.Object.Instantiate(avatarAnimator.gameObject);
+                clonedAvatar = Object.Instantiate(avatarAnimator.gameObject);
+
+                var desc = clonedAvatar.GetComponent<VRCAvatarDescriptor>();
+                if (desc != null) Object.DestroyImmediate(desc);
+
                 // FIXME: Unable to support the case that avatar's body shape balance is tuned by root object's scale. (Is it necessary to assume this case...?)
                 clonedAvatar.transform.localScale = Vector3.one;
                 SceneManager.MoveGameObjectToScene(clonedAvatar, _previewScene);
@@ -277,9 +289,10 @@ namespace Suzuryg.FaceEmo.Detail.Drawing
 
                 // Generate thumbnails
                 var requests = new List<string>(_requests);
+                AnimationClip poseClip = AV3Utility.GetAvatarPoseClip(_aV3Setting?.TargetAvatar as VRCAvatarDescriptor);
                 foreach (var guid in requests)
                 {
-                    _cache[guid] = RenderAnimatedAvatar(guid, clonedAvatar, camera, AnimationProgress);
+                    _cache[guid] = RenderAnimatedAvatar(guid, clonedAvatar, camera, poseClip, AnimationProgress);
 
                     // Apply gamma correction if necessary
                     if (this is ExMenuThumbnailDrawer && _cache[guid] != null &&
@@ -293,7 +306,8 @@ namespace Suzuryg.FaceEmo.Detail.Drawing
                     if (this is ExMenuThumbnailDrawer && _cache[guid] != null &&
                         !ReferenceEquals(_cache[guid], _hourglassIcon) && !ReferenceEquals(_cache[guid], _errorIcon))
                     {
-                        _cache[guid] = DrawingUtility.PaddingWithTransparentPixels(_cache[guid], ThumbnailSetting.ExMenu_OuterWidth, ThumbnailSetting.ExMenu_OuterHeight);
+                        _cache[guid] = DrawingUtility.PaddingWithTransparentPixels(_cache[guid],
+                            DetailConstants.ExMenuThumbnailOuterWidth, DetailConstants.ExMenuThumbnailOuterHeight);
                     }
 
                     // Reset animator status
@@ -332,7 +346,7 @@ namespace Suzuryg.FaceEmo.Detail.Drawing
             SceneManager.MoveGameObjectToScene(light, _previewScene);
         }
 
-        private Texture2D RenderAnimatedAvatar(string clipGUID, GameObject animatorRoot, Camera camera, float animationProgress = 0f)
+        private Texture2D RenderAnimatedAvatar(string clipGUID, GameObject animatorRoot, Camera camera, AnimationClip poseClip, float animationProgress = 0f)
         {
             // Get animation clip
             AnimationClip clip;
@@ -352,7 +366,7 @@ namespace Suzuryg.FaceEmo.Detail.Drawing
             }
 
             // Synthesize avatar pose
-            var synthesized = AV3Utility.SynthesizeAvatarPose(clip, _aV3Setting?.TargetAvatar as VRCAvatarDescriptor);
+            var synthesized = AV3Utility.SynthesizeClip(clip, poseClip);
 
             // Sample animation clip and render
             var positionCache = animatorRoot.transform.position;
