@@ -356,9 +356,13 @@ namespace Suzuryg.FaceEmo.AppMain
                 var contactImporter = new ContactSettingImporter(av3Setting);
 
                 // import
-                var importedPatterns = expressionImporter.ImportExpressionPatterns(avatarDescriptor);
                 var importedClips = expressionImporter.ImportOptionalClips(avatarDescriptor);
+                expressionImporter.ForceBlinkDisable = importedClips.blink != null;
+                var importedPatterns = expressionImporter.ImportExpressionPatterns(avatarDescriptor);
                 var importedContacts = contactImporter.Import(avatarDescriptor);
+
+                var fxDisableSwitchExists = FxDisableSwitchDetector.Detect(avatarDescriptor);
+                av3Setting.DisableFxDuringDancing = fxDisableSwitchExists;
 
                 // confirm
                 if (importedContacts.Any() && !OptoutableDialog.Show(DomainConstants.SystemName,
@@ -423,6 +427,12 @@ namespace Suzuryg.FaceEmo.AppMain
                     {
                         optionResults.Add((MessageType.None, contact.name));
                     }
+                }
+                if (fxDisableSwitchExists)
+                {
+                    optionResults.Add((MessageType.None, string.Empty));
+                    optionResults.Add((MessageType.None,
+                        $"{localizationTable.InspectorView_Dance}{localizationTable.Common_Colon}{localizationTable.InspectorView_Dance_DisableEntireFxLayer}"));
                 }
 
                 optionResults.Add((MessageType.None, string.Empty));
